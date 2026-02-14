@@ -61,6 +61,30 @@
             margin: 0 0 28px;
         }
 
+        .user-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        @media (max-width: 420px) {
+            .user-details { grid-template-columns: 1fr; }
+        }
+
+        .user-details label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .user-details input {
+            min-width: 0;
+        }
+
         .input-wrap {
             display: flex;
             gap: 12px;
@@ -223,6 +247,18 @@
     <div class="card">
         <h1>MMT AI Lab: Trip Planner</h1>
         <p class="subtitle">Where do you want to go?</p>
+
+        <div class="user-details">
+            <div>
+                <label for="userName">Your name</label>
+                <input id="userName" type="text" placeholder="e.g. Prashant" autocomplete="name" />
+            </div>
+            <div>
+                <label for="userEmail">Email</label>
+                <input id="userEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+            </div>
+        </div>
+
         <div class="input-wrap">
             <input id="travelInput" placeholder="e.g. 3 days in Manali" type="text" />
             <button onclick="askTravelAI()">Plan My Trip</button>
@@ -266,14 +302,20 @@
 
         async function askTravelAI() {
             const query = document.getElementById("travelInput").value.trim();
+            const userName = document.getElementById("userName").value.trim();
+            const userEmail = document.getElementById("userEmail").value.trim();
             const resultDiv = document.getElementById("result");
 
             resultDiv.style.display = "block";
             resultDiv.className = "loading";
             resultDiv.innerHTML = "AI is thinking...";
 
+            const params = new URLSearchParams({ prompt: query });
+            if (userName) params.set("user_name", userName);
+            if (userEmail) params.set("user_email", userEmail);
+
             try {
-                const response = await fetch(`https://my-ai-backend-xkzq.onrender.com/ask-ai?prompt=${encodeURIComponent(query)}`);
+                const response = await fetch(`https://my-ai-backend-xkzq.onrender.com/ask-ai?${params.toString()}`);
                 const data = await response.json();
                 resultDiv.className = "";
                 resultDiv.innerHTML = formatAiResponse(data.answer || "No response.");
