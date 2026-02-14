@@ -121,26 +121,100 @@
             text-align: left;
             font-size: 0.95rem;
             line-height: 1.7;
-            color: var(--text-muted);
-            padding: 20px;
+            color: var(--text);
+            padding: 24px;
             background: var(--bg);
             border-radius: 12px;
             border: 1px solid var(--border);
             min-height: 80px;
-            white-space: pre-wrap;
         }
 
         #result:empty {
             display: none;
         }
 
-        .loading {
+        #result.loading,
+        #result.error {
             color: var(--text-muted);
+        }
+
+        #result.error {
+            color: #f87171;
+        }
+
+        .loading {
             font-style: italic;
         }
 
-        .error {
-            color: #f87171;
+        /* Styled AI output content */
+        #result .result-content {
+            color: var(--text);
+        }
+
+        #result .result-content p {
+            margin: 0 0 1em;
+        }
+
+        #result .result-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        #result .result-content ul,
+        #result .result-content ol {
+            margin: 0.5em 0 1em;
+            padding-left: 1.5em;
+        }
+
+        #result .result-content li {
+            margin: 0.35em 0;
+            padding-left: 0.25em;
+        }
+
+        #result .result-content ul {
+            list-style: none;
+            padding-left: 1.25em;
+        }
+
+        #result .result-content ul li::before {
+            content: "•";
+            color: var(--accent);
+            font-weight: 700;
+            margin-right: 0.5em;
+        }
+
+        #result .result-content ol {
+            counter-reset: list;
+        }
+
+        #result .result-content ol li {
+            list-style: none;
+            counter-increment: list;
+            position: relative;
+        }
+
+        #result .result-content ol li::before {
+            content: counter(list) ".";
+            color: var(--accent);
+            font-weight: 600;
+            margin-right: 0.5em;
+        }
+
+        #result .result-content strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        #result .result-content .section-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin: 1.25em 0 0.5em;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        #result .result-content .section-title:first-child {
+            margin-top: 0;
         }
     </style>
 </head>
@@ -157,19 +231,52 @@
     </div>
 
     <script>
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatAiResponse(text) {
+            if (!text || !text.trim()) return "";
+            const escaped = escapeHtml(text);
+            const withBold = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+            const blocks = withBold.split(/\n\n+/);
+            const html = blocks.map(block => {
+                const lines = block.split("\n").filter(l => l.trim());
+                if (lines.length === 0) return "";
+                const bulletMatch = lines.every(l => /^\s*[-*]\s+/.test(l) || l.trim() === "");
+                const numberMatch = lines.every(l => /^\s*\d+\.\s+/.test(l) || l.trim() === "");
+                if (bulletMatch && lines.some(l => l.trim())) {
+                    const items = lines.filter(l => l.trim()).map(l => l.replace(/^\s*[-*]\s+/, "").trim());
+                    return "<ul>" + items.map(i => "<li>" + i + "</li>").join("") + "</ul>";
+                }
+                if (numberMatch && lines.some(l => l.trim())) {
+                    const items = lines.filter(l => l.trim()).map(l => l.replace(/^\s*\d+\.\s+/, "").trim());
+                    return "<ol>" + items.map(i => "<li>" + i + "</li>").join("") + "</ol>";
+                }
+                const isShortTitle = lines.length === 1 && lines[0].length < 60 && (lines[0].endsWith(":") || /^#{1,3}\s/.test(block));
+                if (isShortTitle) {
+                    return '<p class="section-title">' + lines[0].replace(/^#+\s*/, "").replace(/:$/, "") + "</p>";
+                }
+                return "<p>" + lines.join("<br>") + "</p>";
+            }).join("");
+            return '<div class="result-content">' + html + "</div>";
+        }
+
         async function askTravelAI() {
             const query = document.getElementById("travelInput").value.trim();
             const resultDiv = document.getElementById("result");
 
             resultDiv.style.display = "block";
             resultDiv.className = "loading";
-            resultDiv.textContent = "AI is thinking...";
+            resultDiv.innerHTML = "AI is thinking...";
 
             try {
                 const response = await fetch(`https://my-ai-backend-xkzq.onrender.com/ask-ai?prompt=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 resultDiv.className = "";
-                resultDiv.textContent = data.answer || "No response.";
+                resultDiv.innerHTML = formatAiResponse(data.answer || "No response.");
             } catch (error) {
                 resultDiv.className = "error";
                 resultDiv.textContent = "Error connecting to AI backend.";
