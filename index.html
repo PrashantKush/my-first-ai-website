@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prashant's AI Lab</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 100px;
+            background-color: #f4f4f4;
+        }
+
+        input {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Welcome to Prashant's AI Lab</h1>
+
+    <p>Enter your name:</p>
+
+    <input id="nameInput" placeholder="Type your name" />
+
+    <br><br>
+
+    <button onclick="sayHello()">Submit</button>
+
+    <div id="result"></div>
+
+    <script>
+        function sayHello() {
+            const name = document.getElementById("nameInput").value;
+            document.getElementById("result").innerText =
+                "Hello " + name + "! Your AI journey has begun.";
+        }
+    </script>
+
+</body>
+</html>
